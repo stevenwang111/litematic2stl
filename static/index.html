@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="title">STL 文件预览</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-body: #1a1a2e;
+      --bg-topbar: #16213e;
+      --bg-canvas: #111827;
+      --bg-infobar: #16213ecc;
+      --bg-colorsbar: #16213ecc;
+      --border: #0f3460;
+      --text-primary: #e0d5c1;
+      --text-secondary: #8899aa;
+      --text-value: #7ecfff;
+      --btn-primary-bg: #0f3460;
+      --btn-primary-hover: #1a4a8a;
+      --btn-primary-color: #fff;
+      --grid-color1: #4a5568;
+      --grid-color2: #2d3748;
+    }
+    [data-theme="light"] {
+      --bg-body: #f0f2f5;
+      --bg-topbar: #ffffff;
+      --bg-canvas: #e8ecf1;
+      --bg-infobar: #ffffffcc;
+      --bg-colorsbar: #ffffffcc;
+      --border: #d0d0d0;
+      --text-primary: #333333;
+      --text-secondary: #666666;
+      --text-value: #1565c0;
+      --btn-primary-bg: #e0e0e0;
+      --btn-primary-hover: #cccccc;
+      --btn-primary-color: #333;
+      --grid-color1: #cccccc;
+      --grid-color2: #aaaaaa;
+    }
+    body {
+      background: var(--bg-body);
+      color: var(--text-primary);
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+      transition: background .3s, color .3s;
+    }
+    .app {
+      display: flex;
+      flex-flow: column nowrap;
+      height: 100vh;
+    }
+    .top-bar {
+      background: var(--bg-topbar);
+      padding: 12px 20px;
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 2px solid var(--border);
+      flex-shrink: 0;
+      transition: background .3s, border-color .3s;
+    }
+    .top-bar h1 {
+      font-size: 20px;
+      color: #e94560;
+      margin-right: 16px;
+      white-space: nowrap;
+    }
+    .file-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all .2s;
+    }
+    .btn-primary {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-color);
+    }
+    .btn-primary:hover {
+      background: var(--btn-primary-hover);
+      border-color: rgba(255,255,255,0.4);
+    }
+    .btn-success {
+      background: #1b6b3a;
+      color: #fff;
+    }
+    .btn-success:hover {
+      background: #248a4a;
+    }
+    .btn-danger {
+      background: #8a1f2e;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #b0283b;
+    }
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    .info-bar {
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      gap: 16px;
+      padding: 6px 20px;
+      background: var(--bg-infobar);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: background .3s, border-color .3s;
+    }
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+    }
+    .info-item .label {
+      color: var(--text-secondary);
+    }
+    .info-item .value {
+      color: var(--text-value);
+      font-weight: bold;
+    }
+    .info-item .value.faces {
+      color: #7ddf7d;
+    }
+    .canvas-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-canvas);
+      transition: background .3s;
+    }
+    .canvas-wrap canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-flow: column;
+      align-items: center;
+      justify-content: center;
+      color: #4a5568;
+      pointer-events: none;
+    }
+    .placeholder svg {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 16px;
+      opacity: .4;
+    }
+    .placeholder p {
+      font-size: 16px;
+    }
+    .colors-bar {
+      display: flex;
+      flex-flow: row wrap;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 20px;
+      background: var(--bg-colorsbar);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      transition: background .3s, border-color .3s;
+    }
+    .colors-bar span {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .color-swatch:hover {
+      transform: scale(1.15);
+    }
+    .color-swatch.active {
+      border-color: var(--text-primary);
+      box-shadow: 0 0 8px rgba(255,255,255,.3);
+    }
+    .toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all .2s;
+    }
+    .toggle-btn:hover {
+      opacity: .75;
+    }
+    .toggle-btn.active {
+      background: var(--btn-primary-bg);
+      color: var(--btn-primary-color);
+      border-color: var(--btn-primary-bg);
+    }
+    @media (max-width: 600px) {
+      .top-bar h1 { font-size: 16px; }
+      .btn { font-size: 12px; padding: 6px 12px; }
+      .info-bar { gap: 8px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top-bar">
+      <h1 data-i18n="appTitle">STL 3D 预览</h1>
+      <div class="file-input-wrapper">
+        <input type="file" id="fileInput" accept=".stl">
+        <label class="btn btn-primary" for="fileInput">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span data-i18n="openStl">打开 STL</span>
+        </label>
+        <input type="file" id="litematicInput" accept=".litematic">
+        <label class="btn btn-primary" for="litematicInput" style="background:#533483;color:#fff;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" x2="12" y1="18" y2="12"/><line x1="9" x2="15" y1="15" y2="15"/></svg>
+          <span data-i18n="uploadLitematic">上传 Litematic</span>
+        </label>
+        <button class="btn btn-success" id="btnDownload" title="下载 STL" data-i18n-title="downloadStl">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="downloadStl">下载 STL</span>
+        </button>
+        <button class="btn btn-success" id="btnReset" data-i18n-title="resetView">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          <span data-i18n="resetView">重置视角</span>
+        </button>
+        <button class="btn btn-danger" id="btnClear"><span data-i18n="clear">清除</span></button>
+      </div>
+    </div>
+
+    <div class="info-bar" id="infoBar">
+      <div class="info-item"><span class="label" data-i18n="fileName">文件名:</span><span class="value" id="fileName">-</span></div>
+      <div class="info-item"><span class="label" data-i18n="triangles">三角面:</span><span class="value faces" id="faceCount">0</span></div>
+      <div class="info-item"><span class="label" data-i18n="vertices">顶点:</span><span class="value" id="vertexCount">0</span></div>
+      <div class="info-item"><span class="label" data-i18n="size">尺寸:</span><span class="value" id="modelSize">-</span></div>
+      <div class="info-item"><span class="label" data-i18n="volume">体积:</span><span class="value" id="modelVolume">-</span></div>
+    </div>
+
+    <div class="canvas-wrap" id="canvasWrap">
+      <div class="placeholder" id="placeholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        <p data-i18n="placeholder">拖入或点击上方按钮打开 STL 文件</p>
+      </div>
+    </div>
+
+    <div class="colors-bar">
+      <span data-i18n="colorLabel">显示颜色:</span>
+      <div class="color-swatch" style="background:#e94560" data-color="#e94560" data-i18n-title="swatchRed"></div>
+      <div class="color-swatch" style="background:#4fc3f7" data-color="#4fc3f7" data-i18n-title="swatchCyan"></div>
+      <div class="color-swatch" style="background:#81c784" data-color="#81c784" data-i18n-title="swatchGreen"></div>
+      <div class="color-swatch" style="background:#ffb74d" data-color="#ffb74d" data-i18n-title="swatchOrange"></div>
+      <div class="color-swatch" style="background:#ce93d8" data-color="#ce93d8" data-i18n-title="swatchPurple"></div>
+      <div class="color-swatch" style="background:#ef5350" data-color="#ef5350" data-i18n-title="swatchRed2"></div>
+      <div class="color-swatch" style="background:#78909c" data-color="#78909c" data-i18n-title="swatchGray"></div>
+      <div class="color-swatch active" style="background:#ffffff;border-color:#999;" data-color="#ffffff" data-i18n-title="swatchWhite"></div>
+      <span style="margin-left:12px;">|</span>
+      <span style="margin-left:12px;" data-i18n="dragHint">拖拽旋转 / 滚轮缩放</span>
+      <span style="margin-left:12px;">|</span>
+      <button class="toggle-btn" id="btnTheme">☾ 深色</button>
+      <button class="toggle-btn active" id="btnLightMode">◐ 点光</button>
+      <span style="margin-left:12px;">|</span>
+      <button class="toggle-btn" id="btnLang" data-i18n="langSwitch">EN</button>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.173.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.173.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module" src="static/js/app.js"></script>
+</body>
+</html>
